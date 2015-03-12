@@ -1,6 +1,10 @@
 package io.turtle.core.routing;
 
+import io.turtle.core.services.PublishThread;
 import io.turtle.core.services.Resources;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gabriele on 09/03/2015.
@@ -12,8 +16,10 @@ public class Proxy {
 
     int threadCount = 2;
 
+    List<PublishThread> publishs;
     public Proxy(Resources resources) {
         this.resources = resources;
+        publishs = resources.getPublishThreads();
 
     }
 
@@ -25,17 +31,16 @@ public class Proxy {
 
     }
 
-    private int dispatchInteger = 0;
-    private int total = 0;
+    private AtomicInteger dispatchInteger = new AtomicInteger();
 
 
-    public void dispatchPublish(RoutingMessage routingMessage) throws InterruptedException {
-        resources.getPublishThreads().get(dispatchInteger).addMessage(routingMessage);
-        total = resources.getPublishThreads().size();
-        dispatchInteger += 1;
-        if (dispatchInteger >= total) {
-            dispatchInteger = 0;
-        }
+    public synchronized void dispatchPublish(RoutingMessage routingMessage) throws InterruptedException {
+        publishs.get(dispatchInteger.get()).
+                    addMessage(routingMessage);
+            if (dispatchInteger.addAndGet(1) >= resources.getPublishThreads().size()) {
+                dispatchInteger.set(0);
+            }
+
     }
 
 

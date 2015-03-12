@@ -41,7 +41,7 @@ public class TurtleEnvironment {
 
     }
 
-    public void publish(Message message, String... tags) throws InterruptedException {
+    public  void publish(Message message, String... tags) throws InterruptedException {
         proxy.dispatchPublish(new RoutingMessage(message, tags));
     }
 

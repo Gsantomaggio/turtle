@@ -2,6 +2,7 @@ package io.turtle.core.services;
 
 import io.turtle.core.routing.RoutingMessage;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -14,8 +15,11 @@ public class PublishThread extends TurtleThread {
 
     private Resources resources;
 
+    List<SubscribeThread> subscribes;
     public PublishThread(Resources resources) {
+
         this.resources = resources;
+        subscribes = resources.getSubscribeThreads();
     }
 
     private BlockingQueue<RoutingMessage> messages = new LinkedBlockingQueue<>();
@@ -38,7 +42,7 @@ public class PublishThread extends TurtleThread {
                 RoutingMessage routingMessage = messages.poll(200, TimeUnit.MILLISECONDS);
 
                 if (routingMessage != null) {
-                    resources.getSubscribeThreads().get(nextThread).HandleRoutingMessage(routingMessage);
+                    subscribes.get(nextThread).HandleRoutingMessage(routingMessage);
                     resources.incMessagesPublished();
                     nextThread += 1;
                     if (nextThread >= resources.getSubscribeThreads().size()) {

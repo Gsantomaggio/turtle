@@ -3,10 +3,7 @@ package io.turtle.core.services;
 import io.turtle.configuration.Configuration;
 import io.turtle.pubsub.Subscriber;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -62,11 +59,11 @@ public class Resources {
 
 
     public List<PublishThread> getPublishThreads() {
-        return publishThreads;
+        return Collections.synchronizedList(publishThreads);
     }
 
     public List<SubscribeThread> getSubscribeThreads() {
-        return subscribeThreads;
+        return Collections.synchronizedList(subscribeThreads);
     }
 
     public Map<String, Subscriber> getSubscribers() {

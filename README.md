@@ -41,6 +41,7 @@ The library contains three threads kind:
 
 The Publish and the Subscribe threads are internal, by default their number is half of the core available for each category.
 >es: 8 core, 4  for Publish-Thread and 4 for Subscriber-Thread.
+
 The configuration can be modified.
 
 The internals threads are not-blocking, they use LinkedBlockingQueue to share data between the threads but using pool with time-out.
@@ -50,7 +51,9 @@ The messages flow is described as follow:
 ![alt tag](https://raw.githubusercontent.com/Gsantomaggio/turtle/master/doc/images/Internals.jpg)
 
 Each thread is isolated and can work without wait lock time between other threads. Internally the threads have an “dummy” cache to improve the performance in high throughput case.
-The cache reduce the java synchronization time append more the one message to the queue-list.  In this version the cache is not configurable and it is checked each 200 millisecond.
+
+The cache reduce the java synchronization time appending more than one message to the queue-list.  In this version the cache is not configurable and it is checked each 200 millisecond.
+
 Finally the worker threads are used by clients,  if the pool is full the worker threads are blocked and the messages will be stored to the subscriber thread queue.
 
 
