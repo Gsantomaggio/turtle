@@ -70,6 +70,9 @@ Resources count:
 
 ![alt tag](https://raw.githubusercontent.com/Gsantomaggio/turtle/master/doc/images/ResourcesCounter.png)
 
+#####Does it support the cluster?
+The project is just started and it is only a library, I’m making some test with JGroups (http://www.jgroups.org/), soon I’ll release the first cluster version.
+
 
 
 
