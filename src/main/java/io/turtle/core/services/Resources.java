@@ -42,8 +42,8 @@ public class Resources {
     private ExecutorService workerServiceThread = null;
     private ConcurrentHashMap<String, Subscriber> subscribers = new ConcurrentHashMap<>();
 
-    private List<SubscribeThread> subscribeThreads = new ArrayList<>();
-    private List<PublishThread> publishThreads = new ArrayList<>();
+    private ConcurrentHashMap<Integer,SubscribeThread> subscribeThreads = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Integer,PublishThread> publishThreads = new ConcurrentHashMap<>();
     public AtomicInteger totalMessagesPublished = new AtomicInteger();
     public AtomicInteger totalMessagesDeliveredByWorker = new AtomicInteger();
     public AtomicInteger totalMessagesDelivered = new AtomicInteger();
@@ -58,12 +58,12 @@ public class Resources {
     private Configuration currentConfiguration;
 
 
-    public List<PublishThread> getPublishThreads() {
-        return Collections.synchronizedList(publishThreads);
+    public Map<Integer,PublishThread> getPublishThreads() {
+        return publishThreads;
     }
 
-    public List<SubscribeThread> getSubscribeThreads() {
-        return Collections.synchronizedList(subscribeThreads);
+    public Map<Integer,SubscribeThread> getSubscribeThreads() {
+        return subscribeThreads;
     }
 
     public Map<String, Subscriber> getSubscribers() {
@@ -91,13 +91,13 @@ public class Resources {
         internalServiceThread = Executors.newFixedThreadPool(threadCount, new ServiceThreadFactory());
         for (int i = 0; i < configuration.getSubscribeThreadCount(); i++) {
             SubscribeThread subscribeThread = new SubscribeThread(this);
-            subscribeThreads.add(subscribeThread);
+            subscribeThreads.put(new Integer(i),subscribeThread);
             internalServiceThread.submit(subscribeThread);
         }
 
         for (int i = 0; i < configuration.getPublishThreadCount(); i++) {
             PublishThread publishThread = new PublishThread(this);
-            publishThreads.add(publishThread);
+            publishThreads.put(new Integer(i), publishThread);
             internalServiceThread.submit(publishThread);
         }
         workerServiceThread = Executors.newFixedThreadPool(configuration.getWorkersThreadCount(), new WorkerThreadFactory());

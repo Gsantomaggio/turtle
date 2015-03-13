@@ -16,10 +16,8 @@ public class Proxy {
 
     int threadCount = 2;
 
-    List<PublishThread> publishs;
     public Proxy(Resources resources) {
         this.resources = resources;
-        publishs = resources.getPublishThreads();
 
     }
 
@@ -35,7 +33,7 @@ public class Proxy {
 
 
     public synchronized void dispatchPublish(RoutingMessage routingMessage) throws InterruptedException {
-        publishs.get(dispatchInteger.get()).
+        resources.getPublishThreads().get(dispatchInteger.get()).
                     addMessage(routingMessage);
             if (dispatchInteger.addAndGet(1) >= resources.getPublishThreads().size()) {
                 dispatchInteger.set(0);

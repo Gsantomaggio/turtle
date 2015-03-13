@@ -39,6 +39,16 @@ public class MultiThreadingPublishSubscribe {
             }
         },"#hello");
 
+        AtomicInteger atomicInteger1 = new AtomicInteger();
+        String si2 = env.subscribe(new MessagesHandler<Message>() {
+            @Override
+            public void handlerMessage(Message message) {
+                if(atomicInteger1.addAndGet(1) == message_to_sent){
+                    log.info("got 2: " + atomicInteger1.get());
+                }
+            }
+        },"#hello");
+
         AtomicInteger counter = new AtomicInteger();
         AtomicInteger counter1 = new AtomicInteger();
         ExecutorService pollPublish = Executors.newFixedThreadPool(100);
