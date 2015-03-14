@@ -22,7 +22,7 @@ public class ResourcesCounter implements ResourcesCounterMXBean {
 
     @Override
     public int getTagIndexCount() {
-        return resources.getTagIndex().size();
+        return resources.getTagIndex().getCount();
     }
 
     @Override

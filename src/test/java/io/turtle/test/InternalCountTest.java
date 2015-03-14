@@ -2,8 +2,9 @@ package io.turtle.test;
 
 import io.turtle.core.handlers.MessagesHandler;
 import io.turtle.env.TurtleEnvironment;
-import io.turtle.pubsub.Message;
+
 import org.junit.Test;
+import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
@@ -14,19 +15,19 @@ public class InternalCountTest extends BaseTestClass {
 
 
     @Test
-    public void testName() throws Exception {
+    public void tesInternalCount() throws Exception {
         TurtleEnvironment turtleEnvironment = new TurtleEnvironment();
         turtleEnvironment.init();
-        String subid1 = turtleEnvironment.subscribe(new MessagesHandler<Message>() {
+        String subid1 = turtleEnvironment.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
 
             }
         }, "tag1", "tag2", "tag3", "tag4", "tag5", "tag6");
 
-        String subid2 = turtleEnvironment.subscribe(new MessagesHandler<Message>() {
+        String subid2 = turtleEnvironment.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
 
             }
         }, "tag6", "tag7", "tag8", "tag9", "tag10");
@@ -40,8 +41,6 @@ public class InternalCountTest extends BaseTestClass {
         assertTrue(turtleEnvironment.getResourcesCounter().getTagIndexCount() == 0);
         assertTrue(turtleEnvironment.getResourcesCounter().getSubscriberCount() == 0);
 
-
         turtleEnvironment.deInit();
-
     }
 }

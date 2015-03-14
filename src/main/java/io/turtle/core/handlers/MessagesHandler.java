@@ -1,11 +1,14 @@
 package io.turtle.core.handlers;
 
-import io.turtle.pubsub.Message;
+
+import java.util.Map;
 
 
 /**
  * Created by gabriele on 08/03/15.
+ * Generic interface to handle messages.
+ *
  */
 public interface MessagesHandler<T> {
-    void handlerMessage(Message message);
+    void handlerMessage(Map<String,String> header, byte[] body,String firstMatchTag);
 }

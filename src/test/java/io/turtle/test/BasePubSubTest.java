@@ -2,12 +2,11 @@ package io.turtle.test;
 
 import io.turtle.core.handlers.MessagesHandler;
 import io.turtle.env.TurtleEnvironment;
-import io.turtle.pubsub.Message;
-import io.turtle.pubsub.impl.StringMessage;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
@@ -16,28 +15,25 @@ public class BasePubSubTest extends BaseTestClass {
 
     @Test
     public void testPublish() throws Exception {
-        TurtleEnvironment turtleEnvironment = new TurtleEnvironment();
-        turtleEnvironment.init();
+        TurtleEnvironment turtleEnvironment = getTurtleEnvironment();
         final List<String> list = new ArrayList<>();
-        final String value_message = "mytestmessage";
-        StringMessage testMessage = new StringMessage();
-        String subScriberId = turtleEnvironment.subscribe(new MessagesHandler<Message>() {
+        final String value_message = "Pasta and wine!!";
+        final String firstMatchTag="pasta";
+        String subScriberId = turtleEnvironment.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
-                if (message instanceof StringMessage)
-                    list.add(((StringMessage) message).getValue());
-            }
-        }, "test");
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
 
-        testMessage.setValue(value_message);
-        turtleEnvironment.publish(testMessage, "test");
+                    list.add(new String(body));
+                    list.add(firstMatchTag);
+            }
+        }, firstMatchTag);
+        turtleEnvironment.publish(value_message.getBytes(), "test3","notest4",firstMatchTag);
         testWait();
         turtleEnvironment.unSubscribe(subScriberId);
         turtleEnvironment.deInit();
-        assertTrue(list.size() == 1);
+        assertTrue(list.size() == 2);
         assertTrue(list.get(0).equalsIgnoreCase(value_message));
-
-
+        assertTrue(list.get(1).equalsIgnoreCase(firstMatchTag));
     }
 
 

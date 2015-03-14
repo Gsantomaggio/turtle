@@ -7,10 +7,10 @@ import io.turtle.core.routing.RoutingMessage;
 import io.turtle.core.services.Resources;
 import io.turtle.jmx.JMXAgent;
 import io.turtle.jmx.impl.ResourcesCounter;
-import io.turtle.pubsub.Message;
 import io.turtle.pubsub.Subscriber;
 import io.turtle.pubsub.impl.LocalSubscriber;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -41,12 +41,15 @@ public class TurtleEnvironment {
 
     }
 
-    public  void publish(Message message, String... tags) throws InterruptedException {
-        proxy.dispatchPublish(new RoutingMessage(message, tags));
+    public  void publish(byte[] body, Map<String,String> header, String... tags) throws InterruptedException {
+        proxy.dispatchPublish(new RoutingMessage(body,header, tags));
     }
 
+    public  void publish(byte[] body,  String... tags) throws InterruptedException {
+        this.publish(body,null,tags);
+    }
 
-    public synchronized String subscribe(MessagesHandler<Message> messageHandler, String... tags) {
+    public synchronized String subscribe(MessagesHandler messageHandler, String... tags) {
         Subscriber subscriber = new LocalSubscriber();
         subscriber.messageHandlers.add(messageHandler);
         for (String itm : tags) {

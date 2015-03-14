@@ -2,13 +2,8 @@ package io.turtle.example;
 
 import io.turtle.core.handlers.MessagesHandler;
 import io.turtle.env.TurtleEnvironment;
-import io.turtle.pubsub.Message;
-import io.turtle.pubsub.impl.StringMessage;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -31,9 +26,9 @@ public class SimplePublishSubscribe {
 
         long startTime = System.currentTimeMillis();
         AtomicInteger messageRecvSub1 = new AtomicInteger();
-        String subid = env.subscribe(new MessagesHandler<Message>() {
+        String subid = env.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
                 if (messageRecvSub1.addAndGet(1) == message_to_sent) {
                     long endTime = System.currentTimeMillis();
                     long duration = (endTime - startTime);
@@ -51,11 +46,9 @@ public class SimplePublishSubscribe {
         }
 
         AtomicInteger messageRecvSub2 = new AtomicInteger();
-        String subid2 = env.subscribe(new MessagesHandler<Message>() {
+        String subid2 = env.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
-                if (message instanceof StringMessage)
-                    ((StringMessage) message).getValue();
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
                 if (messageRecvSub2.addAndGet(1) == message_to_sent) {
                     long endTime = System.currentTimeMillis();
                     long duration = (endTime - startTime);
@@ -67,9 +60,9 @@ public class SimplePublishSubscribe {
 
 
         AtomicInteger messageRecvSub3 = new AtomicInteger();
-        String subid3 = env.subscribe(new MessagesHandler<Message>() {
+        String subid3 = env.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
+            public void handlerMessage(Map header, byte[] body, String firsttMatchTag) {
              /*   try {
                     TimeUnit.MILLISECONDS.sleep(100);
                 } catch (InterruptedException e) {
@@ -86,9 +79,7 @@ public class SimplePublishSubscribe {
 
 
         for (int i = 0; i < message_to_sent; i++) {
-            StringMessage stringMessage = new StringMessage();
-            stringMessage.setValue("today spaghetti and wine !!");
-            env.publish(new StringMessage(), "#pasta", "#wine", "#spaghetti");
+            env.publish(new String("today spaghetti and wine !!").getBytes(), "#pasta", "#wine", "#spaghetti");
             //TimeUnit.MILLISECONDS.sleep(1);
         }
 

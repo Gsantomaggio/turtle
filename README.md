@@ -18,17 +18,14 @@ With turtle you can publish and subscribe messages using “tags”.
 ```java
         TurtleEnvironment env = new TurtleEnvironment();
         env.init();
-        String subscriberId = env.subscribe(new MessagesHandler<Message>() {
+        String subscriberId = env.subscribe(new MessagesHandler() {
             @Override
-            public void handlerMessage(Message message) {
-                 if (message instanceof StringMessage)
-                    ((StringMessage) message).getValue();
+            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
+                 System.out.println(new String(body));
             }
         },"#pizza","#pasta","#beer");
         
-        StringMessage stringMessage = new StringMessage();
-        stringMessage.setValue("today spaghetti and wine !!");
-        env.publish( new StringMessage(),"#pasta","#wine","#spaghetti");
+        env.publish("today spaghetti and wine !!".getBytes(),"#pasta","#wine","#spaghetti");
         ....
         env.unSubscribe(subscriberId);
         env.deInit();

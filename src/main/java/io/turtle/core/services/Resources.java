@@ -1,6 +1,9 @@
 package io.turtle.core.services;
 
 import io.turtle.configuration.Configuration;
+import io.turtle.core.services.utils.TurtleThreadFactory;
+import io.turtle.core.tag.TagIndex;
+import io.turtle.core.tag.impl.LocalTagIndex;
 import io.turtle.pubsub.Subscriber;
 
 import java.util.*;
@@ -10,32 +13,9 @@ import java.util.logging.Logger;
 
 /**
  * Created by gabriele on 08/03/15.
+ * Resources is the  core class, contains threads
  */
 public class Resources {
-
-
-    private class WorkerThreadFactory implements ThreadFactory {
-        private int counter = 0;
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r, "WorkerThread-" + counter++);
-
-            return t;
-        }
-    }
-
-    private class ServiceThreadFactory implements ThreadFactory {
-        private int counter = 0;
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r, "ServiceThread-" + counter++);
-
-            return t;
-        }
-    }
-
 
     private static final Logger log = Logger.getLogger(Resources.class.getName());
     private ExecutorService internalServiceThread = null;
@@ -44,16 +24,17 @@ public class Resources {
 
     private ConcurrentHashMap<Integer,SubscribeThread> subscribeThreads = new ConcurrentHashMap<>();
     private ConcurrentHashMap<Integer,PublishThread> publishThreads = new ConcurrentHashMap<>();
+
+
+
+
     public AtomicInteger totalMessagesPublished = new AtomicInteger();
     public AtomicInteger totalMessagesDeliveredByWorker = new AtomicInteger();
     public AtomicInteger totalMessagesDelivered = new AtomicInteger();
-
-    private Map<String, ArrayList<String>> tagIndex = new HashMap<>();
-
-    public Map getTagIndex() {
+    private TagIndex tagIndex = new LocalTagIndex();
+    public TagIndex getTagIndex(){
         return tagIndex;
     }
-
 
     private Configuration currentConfiguration;
 
@@ -88,7 +69,7 @@ public class Resources {
         currentConfiguration = configuration;
         int threadCount = configuration.getDispatchThreadCount();
         log.info(" Init resources, core:" + threadCount + " - Subscribe Threads: " + configuration.getSubscribeThreadCount() + " - Publish Threads: " + configuration.getPublishThreadCount());
-        internalServiceThread = Executors.newFixedThreadPool(threadCount, new ServiceThreadFactory());
+        internalServiceThread = Executors.newFixedThreadPool(threadCount, new TurtleThreadFactory("ServiceThread"));
         for (int i = 0; i < configuration.getSubscribeThreadCount(); i++) {
             SubscribeThread subscribeThread = new SubscribeThread(this);
             subscribeThreads.put(new Integer(i),subscribeThread);
@@ -100,7 +81,7 @@ public class Resources {
             publishThreads.put(new Integer(i), publishThread);
             internalServiceThread.submit(publishThread);
         }
-        workerServiceThread = Executors.newFixedThreadPool(configuration.getWorkersThreadCount(), new WorkerThreadFactory());
+        workerServiceThread = Executors.newFixedThreadPool(configuration.getWorkersThreadCount(), new TurtleThreadFactory("WorkerThread"));
     }
 
 
@@ -110,43 +91,32 @@ public class Resources {
 
 
     public ArrayList<String> getSubscriberIdsbyTag(String tag) {
-        return tagIndex.get(tag);
+        return tagIndex.getSubscriberIdsByTag(tag);
     }
 
-    private void addTagToIndex(String tag, String subscribeId) {
-        ArrayList<String> subMapped = null;
-        if (tagIndex.get(tag) == null) {
-            subMapped = new ArrayList();
-            tagIndex.put(tag, subMapped);
-        } else subMapped = tagIndex.get(tag);
-
-        if (subMapped.stream().filter(x -> (x.equalsIgnoreCase(subscribeId))).count() == 0) {
-            subMapped.add(subscribeId);
-        }
-    }
 
     public void registerSubscriber(String key, Subscriber subscriber) {
         subscribers.put(key, subscriber);
-        subscriber.tags.getTags().forEach(x -> addTagToIndex(x, subscriber.subscriberID));
+        subscriber.tags.getTags().forEach(x -> tagIndex.addTagToIndex(x, subscriber.subscriberID));
     }
 
 
-    public void unRegisterSubscriber(String key) {
-        Subscriber subscriber = subscribers.get(key);
+    public void unRegisterSubscriber(String subscriberId) {
+        Subscriber subscriber = subscribers.get(subscriberId);
+
         subscriber.tags.getTags().forEach(x -> {
-            ArrayList<String> subMapped = tagIndex.get(x);
-            subMapped.remove(key);
-            if (subMapped.isEmpty()) tagIndex.remove(x);
+           tagIndex.removeTagToIndex(x,subscriberId);
         });
 
-        subscribers.remove(key);
+        subscribers.remove(subscriberId);
 
     }
 
 
     public void deInit() {
         if (internalServiceThread != null) {
-            log.info(" De-Init resources");
+            log.info("De init resources");
+            subscribers.entrySet().forEach(x->unRegisterSubscriber(x.getKey()));
             internalServiceThread.shutdownNow();
             workerServiceThread.shutdownNow();
             try {
@@ -156,13 +126,11 @@ public class Resources {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
+            log.info("De init done");
         }
     }
-
     public ExecutorService getWorkerServiceThread() {
         return workerServiceThread;
     }
-
 
 }
