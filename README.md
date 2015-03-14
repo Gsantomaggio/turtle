@@ -53,9 +53,9 @@ The cache reduce the java synchronization time appending more than one message t
 
 Finally the worker threads are used by clients,  if the pool is full the worker threads are blocked and the messages will be stored to the subscriber thread queue.
 
-
-
-The “tag” engine is a simple map that contains the tag word and the subscriber-ids that use the tag.
+#####Serializzation:
+The current version does not provide class serializations, the body message is an byte[]. Using byte[] is very flexible, the sender can implement the serialization as prefer.
+Anyway, I'm planning to implement also a primitive types.
 
 
 #####Monitoring:
@@ -67,8 +67,12 @@ Resources count:
 
 ![alt tag](https://raw.githubusercontent.com/Gsantomaggio/turtle/master/doc/images/ResourcesCounter.png)
 
-#####Does it support the cluster?
-The project is just started and it is only a library, I’m making some test with JGroups (http://www.jgroups.org/), soon I’ll release the first cluster version.
+#####What's the plan for the future?
+Well, my aim is to create an pluggable Publish and Subscribe system tag based.
+Starting with a library, then an essential asynchronous broker and finally a scalable broker.
+
+#####What about the cluster?
+I’m making some test with JGroups (http://www.jgroups.org/).
 
 
 
