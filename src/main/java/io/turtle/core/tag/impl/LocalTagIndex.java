@@ -28,7 +28,6 @@ public class LocalTagIndex implements TagIndex {
         if (subMapped.stream().filter(x -> (x.equalsIgnoreCase(subscribeId))).count() == 0) {
             subMapped.add(subscribeId);
         }
-
     }
 
     @Override

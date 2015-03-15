@@ -10,7 +10,7 @@ public class DefaultConfiguration implements Configuration {
     int dispatchThreadCount = 0;
     int subscribeThreadCount = 0;
     int publishThreadCount = 0;
-    int workersThreadCount = 40;
+    int workersThreadCount = 50;
 
 
     public DefaultConfiguration() {
@@ -27,9 +27,7 @@ public class DefaultConfiguration implements Configuration {
 
             }
         }
-
-        /*subscribeThreadCount = 4;
-        publishThreadCount = 4;*/
+            // for test will be removed
         dispatchThreadCount = publishThreadCount + subscribeThreadCount;
     }
 

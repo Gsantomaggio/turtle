@@ -5,4 +5,5 @@ package io.turtle.core.services;
  */
 public class TurtleThread extends Thread {
     protected boolean markToBeRemoved = false;
+    protected int dispatchInteger = 0;
 }

@@ -34,6 +34,7 @@ public class SubscribeThread extends TurtleThread {
 
     @Override
     public void run() {
+        log.info("SubscribeThread started");
         while ((!this.isInterrupted()) && (!markToBeRemoved)) {
             try {
                 cache.drainTo(messages);
@@ -58,8 +59,10 @@ public class SubscribeThread extends TurtleThread {
                                             {
                                                 resources.getWorkerServiceThread().submit(() -> {
                                                             try {
-                                                                x.handlerMessage(routingMessage.getHeader(),routingMessage.getBody(),tag);
-                                                                resources.totalMessagesDeliveredByWorker.addAndGet(1);
+                                                                synchronized (x){ // this synchronized guarantees one message at time for handle
+                                                                   x.handlerMessage(routingMessage.getHeader(),routingMessage.getBody(),tag);
+                                                                }
+                                                                    resources.totalMessagesDeliveredByWorker.addAndGet(1);
                                                             } catch (Exception e) {
                                                                 log.severe("error handlerMessage:" + e);
                                                                 // must add a error handler

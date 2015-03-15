@@ -107,7 +107,6 @@ public class Resources {
         subscriber.tags.getTags().forEach(x -> {
            tagIndex.removeTagToIndex(x,subscriberId);
         });
-
         subscribers.remove(subscriberId);
 
     }

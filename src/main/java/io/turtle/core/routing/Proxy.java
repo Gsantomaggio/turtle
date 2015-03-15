@@ -14,7 +14,6 @@ public class Proxy {
     final Resources resources;
 
 
-    int threadCount = 2;
 
     public Proxy(Resources resources) {
         this.resources = resources;
@@ -30,8 +29,6 @@ public class Proxy {
     }
 
     private AtomicInteger dispatchInteger = new AtomicInteger();
-
-
     public synchronized void dispatchPublish(RoutingMessage routingMessage) throws InterruptedException {
         resources.getPublishThreads().get(dispatchInteger.get()).
                     addMessage(routingMessage);
