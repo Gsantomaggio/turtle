@@ -1,9 +1,11 @@
 package io.turtle.example;
 
+import com.codahale.metrics.ConsoleReporter;
 import io.turtle.core.handlers.MessagesHandler;
 import io.turtle.env.TurtleEnvironment;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -18,6 +20,14 @@ public class SimplePublishSubscribe {
         log.info("SimplePublishSubscribe");
         TurtleEnvironment env = new TurtleEnvironment();
         env.init();
+
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(env.getMetrics())
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+        reporter.start(3, TimeUnit.SECONDS);
+
+
         final int message_to_sent = 1_000_000;
         log.info("Init done, press key to start test");
         Scanner scanner = new Scanner(System.in);

@@ -1,6 +1,10 @@
 package io.turtle.core.services;
 
+import com.codahale.metrics.MetricRegistry;
 import io.turtle.core.routing.RoutingMessage;
+import io.turtle.metrics.DropwizardMetrics;
+import io.turtle.metrics.TCounter;
+import io.turtle.metrics.impl.DropwizardTCounter;
 import io.turtle.pubsub.Subscriber;
 
 import java.util.ArrayList;
@@ -14,16 +18,24 @@ import java.util.logging.Logger;
  */
 public class SubscribeThread extends TurtleThread {
 
-
     private static final Logger log = Logger.getLogger(SubscribeThread.class.getName());
 
     private BlockingQueue<RoutingMessage> messages;
+
+    private TCounter messagesDelivered;
+    private TCounter workerDelivered;
+
 
     Resources resources;
 
     public SubscribeThread(Resources resources) {
         messages = new LinkedBlockingQueue<>();
         this.resources = resources;
+        messagesDelivered = new DropwizardTCounter();
+        workerDelivered = new DropwizardTCounter();
+
+        messagesDelivered.register(MetricRegistry.name("Subscriber", "messagesDelivered", ""));
+        workerDelivered.register(MetricRegistry.name("Subscriber", "workerDelivered", ""));
     }
 
     LinkedBlockingQueue<RoutingMessage> cache = new LinkedBlockingQueue<RoutingMessage>();
@@ -62,7 +74,7 @@ public class SubscribeThread extends TurtleThread {
                                                                 synchronized (x){ // this synchronized guarantees one message at time for handle
                                                                    x.handlerMessage(routingMessage.getHeader(),routingMessage.getBody(),tag);
                                                                 }
-                                                                    resources.totalMessagesDeliveredByWorker.addAndGet(1);
+                                                                workerDelivered.inc();
                                                             } catch (Exception e) {
                                                                 log.severe("error handlerMessage:" + e);
                                                                 // must add a error handler
@@ -78,7 +90,7 @@ public class SubscribeThread extends TurtleThread {
 
                     });
                     tmpAlreadySent.clear();
-                    resources.incMessagesDelivered();
+                    messagesDelivered.inc();
                 }
 
 

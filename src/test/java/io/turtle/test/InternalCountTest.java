@@ -13,11 +13,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class InternalCountTest extends BaseTestClass {
 
-
     @Test
     public void tesInternalCount() throws Exception {
         TurtleEnvironment turtleEnvironment = new TurtleEnvironment();
         turtleEnvironment.init();
+        int subCount = turtleEnvironment.getSubscribersCount();
         String subid1 = turtleEnvironment.subscribe(new MessagesHandler() {
             @Override
             public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
@@ -25,6 +25,7 @@ public class InternalCountTest extends BaseTestClass {
             }
         }, "tag1", "tag2", "tag3", "tag4", "tag5", "tag6");
 
+         subCount = turtleEnvironment.getSubscribersCount();
         String subid2 = turtleEnvironment.subscribe(new MessagesHandler() {
             @Override
             public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
@@ -33,13 +34,14 @@ public class InternalCountTest extends BaseTestClass {
         }, "tag6", "tag7", "tag8", "tag9", "tag10");
 
 
-        assertTrue(turtleEnvironment.getResourcesCounter().getTagIndexCount() == 10);
-        assertTrue(turtleEnvironment.getResourcesCounter().getSubscriberCount() == 2);
+        assertTrue(turtleEnvironment.getTagIndexCount() == 10);
+         subCount = turtleEnvironment.getSubscribersCount();
+        assertTrue(subCount == 2);
 
         turtleEnvironment.unSubscribe(subid1);
         turtleEnvironment.unSubscribe(subid2);
-        assertTrue(turtleEnvironment.getResourcesCounter().getTagIndexCount() == 0);
-        assertTrue(turtleEnvironment.getResourcesCounter().getSubscriberCount() == 0);
+        assertTrue(turtleEnvironment.getTagIndexCount() == 0);
+        assertTrue(turtleEnvironment.getSubscribersCount() == 0);
 
         turtleEnvironment.deInit();
     }

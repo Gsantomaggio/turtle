@@ -42,7 +42,6 @@ public class PublishThread extends TurtleThread {
                 RoutingMessage routingMessage = messages.poll(200, TimeUnit.MILLISECONDS);
                 if (routingMessage != null) {
                     resources.getSubscribeThreads().get(dispatchInteger).HandleRoutingMessage(routingMessage);
-                    resources.incMessagesPublished();
                     dispatchInteger = dispatching.getNextId(dispatchInteger,resources.getSubscribeThreads().size());
                 }
             } catch (InterruptedException e) {

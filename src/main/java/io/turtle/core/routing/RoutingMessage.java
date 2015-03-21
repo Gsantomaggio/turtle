@@ -20,7 +20,7 @@ public class RoutingMessage extends LocalTags {
         return body;
     }
 
-    public RoutingMessage(byte[] body, Map<String,String> header,String[] tags) {
+    public RoutingMessage(Map<String,String> header,byte[] body, String[] tags) {
         this.body = body;
         this.header = header;
         for (String item : tags) {

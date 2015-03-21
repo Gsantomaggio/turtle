@@ -27,7 +27,7 @@ public class DefaultConfiguration implements Configuration {
 
             }
         }
-            // for test will be removed
+            // for test, it will be removed
         dispatchThreadCount = publishThreadCount + subscribeThreadCount;
     }
 

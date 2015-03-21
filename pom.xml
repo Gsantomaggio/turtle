@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.mqttturtle</groupId>
+    <groupId>io.turtle</groupId>
     <artifactId>turtle</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -14,16 +14,24 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <metrics.version>3.1.1</metrics.version>
+
     </properties>
 
     <dependencies>
         <!-- LOGS -->
 
-
+        <!--
         <dependency>
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups</artifactId>
             <version>3.6.2.Final</version>
+        </dependency>
+      -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${metrics.version}</version>
         </dependency>
 
 

@@ -1,21 +1,24 @@
 package io.turtle.core.services;
 
 import io.turtle.configuration.Configuration;
+import io.turtle.core.handlers.MessagesHandler;
 import io.turtle.core.services.utils.TurtleThreadFactory;
 import io.turtle.core.tag.TagIndex;
 import io.turtle.core.tag.impl.LocalTagIndex;
+import io.turtle.metrics.DropwizardMetrics;
+import io.turtle.metrics.TCounter;
+import io.turtle.metrics.impl.DropwizardTCounter;
 import io.turtle.pubsub.Subscriber;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
  * Created by gabriele on 08/03/15.
  * Resources is the  core class, contains threads
  */
-public class Resources {
+public class Resources{
 
     private static final Logger log = Logger.getLogger(Resources.class.getName());
     private ExecutorService internalServiceThread = null;
@@ -25,18 +28,11 @@ public class Resources {
     private ConcurrentHashMap<Integer,SubscribeThread> subscribeThreads = new ConcurrentHashMap<>();
     private ConcurrentHashMap<Integer,PublishThread> publishThreads = new ConcurrentHashMap<>();
 
-
-
-
-    public AtomicInteger totalMessagesPublished = new AtomicInteger();
-    public AtomicInteger totalMessagesDeliveredByWorker = new AtomicInteger();
-    public AtomicInteger totalMessagesDelivered = new AtomicInteger();
+    private Configuration currentConfiguration;
     private TagIndex tagIndex = new LocalTagIndex();
     public TagIndex getTagIndex(){
         return tagIndex;
     }
-
-    private Configuration currentConfiguration;
 
 
     public Map<Integer,PublishThread> getPublishThreads() {
@@ -49,16 +45,8 @@ public class Resources {
 
     public Map<String, Subscriber> getSubscribers() {
         return subscribers;
-
     }
 
-    public void incMessagesPublished() {
-        totalMessagesPublished.incrementAndGet();
-    }
-
-    public void incMessagesDelivered() {
-        totalMessagesDelivered.incrementAndGet();
-    }
 
     public Configuration getCurrentConfiguration() {
         return currentConfiguration;
@@ -72,6 +60,7 @@ public class Resources {
         internalServiceThread = Executors.newFixedThreadPool(threadCount, new TurtleThreadFactory("ServiceThread"));
         for (int i = 0; i < configuration.getSubscribeThreadCount(); i++) {
             SubscribeThread subscribeThread = new SubscribeThread(this);
+
             subscribeThreads.put(new Integer(i),subscribeThread);
             internalServiceThread.submit(subscribeThread);
         }
@@ -95,15 +84,20 @@ public class Resources {
     }
 
 
-    public void registerSubscriber(String key, Subscriber subscriber) {
-        subscribers.put(key, subscriber);
+    public synchronized String registerSubscriber(Subscriber subscriber,MessagesHandler messageHandler,String... tags) {
+
+        for (String itm : tags) {
+            subscriber.tags.addTag(itm);
+        }
+        subscriber.messageHandlers.add(messageHandler);
+        subscribers.put(subscriber.subscriberID, subscriber);
         subscriber.tags.getTags().forEach(x -> tagIndex.addTagToIndex(x, subscriber.subscriberID));
+        return subscriber.subscriberID;
     }
 
 
-    public void unRegisterSubscriber(String subscriberId) {
+    public synchronized void unRegisterSubscriber(String subscriberId) {
         Subscriber subscriber = subscribers.get(subscriberId);
-
         subscriber.tags.getTags().forEach(x -> {
            tagIndex.removeTagToIndex(x,subscriberId);
         });
