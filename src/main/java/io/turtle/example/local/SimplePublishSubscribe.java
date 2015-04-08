@@ -1,9 +1,10 @@
-package io.turtle.example;
+package io.turtle.example.local;
 
 import com.codahale.metrics.ConsoleReporter;
 import io.turtle.core.handlers.MessagesHandler;
-import io.turtle.env.TurtleEnvironment;
+import io.turtle.env.local.LocalTurtleEnvironment;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,10 +17,10 @@ public class SimplePublishSubscribe {
 
     private static final Logger log = Logger.getLogger(SimplePublishSubscribe.class.getName());
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         log.info("SimplePublishSubscribe");
-        TurtleEnvironment env = new TurtleEnvironment();
-        env.init();
+        LocalTurtleEnvironment env = new LocalTurtleEnvironment();
+        env.open();
 
         ConsoleReporter reporter = ConsoleReporter.forRegistry(env.getMetrics())
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -36,14 +37,11 @@ public class SimplePublishSubscribe {
 
         long startTime = System.currentTimeMillis();
         AtomicInteger messageRecvSub1 = new AtomicInteger();
-        String subid = env.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
-                if (messageRecvSub1.addAndGet(1) == message_to_sent) {
-                    long endTime = System.currentTimeMillis();
-                    long duration = (endTime - startTime);
-                    log.info("1 - **** Duration:" + duration);
-                }
+        String subid = env.subscribe((header, body, firstMatchTag,sourceSubscriber) -> {
+            if (messageRecvSub1.addAndGet(1) == message_to_sent) {
+                long endTime = System.currentTimeMillis();
+                long duration = (endTime - startTime);
+                log.info("1 - **** Duration:" + duration);
             }
         }, "#pizza", "#pasta", "wine");
         listSubscriber.add(subid);
@@ -56,33 +54,27 @@ public class SimplePublishSubscribe {
         }
 
         AtomicInteger messageRecvSub2 = new AtomicInteger();
-        String subid2 = env.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
-                if (messageRecvSub2.addAndGet(1) == message_to_sent) {
-                    long endTime = System.currentTimeMillis();
-                    long duration = (endTime - startTime);
-                    log.info("2 - **** Duration messageRecvSub2 :" + duration);
-                }
+        String subid2 = env.subscribe((header, body, firstMatchTag,sourceSubscriber) -> {
+            if (messageRecvSub2.addAndGet(1) == message_to_sent) {
+                long endTime = System.currentTimeMillis();
+                long duration = (endTime - startTime);
+                log.info("2 - **** Duration messageRecvSub2 :" + duration);
             }
         }, p);
         listSubscriber.add(subid2);
 
 
         AtomicInteger messageRecvSub3 = new AtomicInteger();
-        String subid3 = env.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firsttMatchTag) {
-             /*   try {
-                    TimeUnit.MILLISECONDS.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
-                if (messageRecvSub3.addAndGet(1) == message_to_sent) {
-                    long endTime = System.currentTimeMillis();
-                    long duration = (endTime - startTime);
-                    log.info("3 - **** Duration messageRecvSub3 :" + duration);
-                }
+        String subid3 = env.subscribe((header, body, firsttMatchTag,sourceSubscriber) -> {
+         /*   try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
+            if (messageRecvSub3.addAndGet(1) == message_to_sent) {
+                long endTime = System.currentTimeMillis();
+                long duration = (endTime - startTime);
+                log.info("3 - **** Duration messageRecvSub3 :" + duration);
             }
         }, "winef", "#spaghetti");
         listSubscriber.add(subid3);
@@ -90,19 +82,19 @@ public class SimplePublishSubscribe {
 
         for (int i = 0; i < message_to_sent; i++) {
             env.publish(new String("today spaghetti and wine !!").getBytes(), "#pasta", "#wine", "#spaghetti");
-            //TimeUnit.MILLISECONDS.sleep(1);
+
         }
 
         long endTime = System.currentTimeMillis();
         long duration = (endTime - startTime);
         log.info(" **** Duration publish :" + duration);
-        log.info("press key to de-init");
+        log.info("press key to de-open");
         scanner.nextLine();
         log.info("Total messages 1:" + messageRecvSub1.get());
         log.info("Total messages 2:" + messageRecvSub2.get());
         log.info("Total messages 3:" + messageRecvSub3.get());
         listSubscriber.forEach(env::unSubscribe);
-        env.deInit();
+        env.close();
         log.info("press key to stop");
         scanner.nextLine();
 

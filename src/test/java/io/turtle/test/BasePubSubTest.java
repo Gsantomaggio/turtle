@@ -1,7 +1,7 @@
 package io.turtle.test;
 
 import io.turtle.core.handlers.MessagesHandler;
-import io.turtle.env.TurtleEnvironment;
+import io.turtle.env.local.LocalTurtleEnvironment;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -15,22 +15,19 @@ public class BasePubSubTest extends BaseTestClass {
 
     @Test
     public void testPublish() throws Exception {
-        TurtleEnvironment turtleEnvironment = getTurtleEnvironment();
+        LocalTurtleEnvironment localTurtleEnvironment = getTurtleEnvironment();
         final List<String> list = new ArrayList<>();
         final String value_message = "Pasta and wine!!";
         final String firstMatchTag="pasta";
-        String subScriberId = turtleEnvironment.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
+        String subscriberid = localTurtleEnvironment.subscribe((header, body, firstMatchTag1,sourceSubscriber) -> {
 
-                    list.add(new String(body));
-                    list.add(firstMatchTag);
-            }
+                list.add(new String(body));
+                list.add(firstMatchTag1);
         }, firstMatchTag);
-        turtleEnvironment.publish(value_message.getBytes(), "test3","notest4",firstMatchTag);
+        localTurtleEnvironment.publish(value_message.getBytes(), "test3","notest4",firstMatchTag);
         testWait();
-        turtleEnvironment.unSubscribe(subScriberId);
-        turtleEnvironment.deInit();
+        localTurtleEnvironment.unSubscribe(subscriberid);
+        localTurtleEnvironment.close();
         assertTrue(list.size() == 2);
         assertTrue(list.get(0).equalsIgnoreCase(value_message));
         assertTrue(list.get(1).equalsIgnoreCase(firstMatchTag));

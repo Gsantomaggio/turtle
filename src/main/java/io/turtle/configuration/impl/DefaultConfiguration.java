@@ -27,6 +27,9 @@ public class DefaultConfiguration implements Configuration {
 
             }
         }
+        subscribeThreadCount = 1;
+        publishThreadCount = 1;
+
             // for test, it will be removed
         dispatchThreadCount = publishThreadCount + subscribeThreadCount;
     }

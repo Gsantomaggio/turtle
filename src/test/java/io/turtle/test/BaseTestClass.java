@@ -1,6 +1,6 @@
 package io.turtle.test;
 
-import io.turtle.env.TurtleEnvironment;
+import io.turtle.env.local.LocalTurtleEnvironment;
 import org.junit.Ignore;
 
 import java.util.concurrent.TimeUnit;
@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit;
 @Ignore
 public class BaseTestClass {
 
-    public TurtleEnvironment getTurtleEnvironment() {
-        TurtleEnvironment turtleEnvironment = new TurtleEnvironment();
-        turtleEnvironment.init();
-        return turtleEnvironment;
+    public LocalTurtleEnvironment getTurtleEnvironment() {
+        LocalTurtleEnvironment localTurtleEnvironment = new LocalTurtleEnvironment();
+        localTurtleEnvironment.open();
+        return localTurtleEnvironment;
     }
 
     public void testWait() {

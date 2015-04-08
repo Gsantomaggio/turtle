@@ -2,13 +2,14 @@ package io.turtle.core.services;
 
 import com.codahale.metrics.MetricRegistry;
 import io.turtle.core.routing.RoutingMessage;
-import io.turtle.metrics.DropwizardMetrics;
+import io.turtle.core.tag.TagIndex;
 import io.turtle.metrics.TCounter;
 import io.turtle.metrics.impl.DropwizardTCounter;
 import io.turtle.pubsub.Subscriber;
 
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -16,9 +17,10 @@ import java.util.logging.Logger;
 /**
  * Created by gabriele on 08/03/15.
  */
-public class SubscribeThread extends TurtleThread {
+public class SubscribeThread<T> extends TurtleThread {
 
     private static final Logger log = Logger.getLogger(SubscribeThread.class.getName());
+    private final ConcurrentHashMap<T, Subscriber> subscribers;
 
     private BlockingQueue<RoutingMessage> messages;
 
@@ -27,10 +29,13 @@ public class SubscribeThread extends TurtleThread {
 
 
     Resources resources;
+    private TagIndex<T> tagIndex;
 
-    public SubscribeThread(Resources resources) {
+    public SubscribeThread(TagIndex<T> tagIndex,ConcurrentHashMap<T, Subscriber> subscribers) {
         messages = new LinkedBlockingQueue<>();
-        this.resources = resources;
+        this.resources = Resources.getInstance();
+        this.tagIndex = tagIndex;
+        this.subscribers = subscribers;
         messagesDelivered = new DropwizardTCounter();
         workerDelivered = new DropwizardTCounter();
 
@@ -58,30 +63,28 @@ public class SubscribeThread extends TurtleThread {
                     // need this list in case one subscriber has more than one
                     // tag that match with the routingMessage.getTags()
                     // es: "pizza","pasta" and the tag is "pizza" the message must be send only one time.
-                    ArrayList<String> tmpAlreadySent = new ArrayList<>();
+                    ArrayList<T> tmpAlreadySent = new ArrayList<>();
                     routingMessage.getTags().forEach(tag -> {
                         // for each tag it will find the subscribersID to the indexMap
-                        ArrayList<String> subList = resources.getSubscriberIdsbyTag(tag);
+                        ArrayList<T> subList = tagIndex.getSubscriberIdsByTag(tag);
                         if (subList != null) {
-                            for (String subscribeID : subList) {
-                                Subscriber sub = resources.getSubscribers().get(subscribeID);
+                            for (T subscribeID : subList) {
+                                Subscriber<T> sub = this.subscribers.get(subscribeID);
                                 if (tmpAlreadySent.indexOf(subscribeID) < 0) {
                                     // if the message has not dispatched to the consumer with subscribe-id = subscribeID
-                                    sub.messageHandlers.forEach(x ->
-                                            {
-                                                resources.getWorkerServiceThread().submit(() -> {
-                                                            try {
-                                                                synchronized (x){ // this synchronized guarantees one message at time for handle
-                                                                   x.handlerMessage(routingMessage.getHeader(),routingMessage.getBody(),tag);
+                                    sub.getMessageHandlers().forEach(x ->
+                                                    resources.getWorkerServiceThread().submit(() -> {
+                                                                try {
+                                                                    synchronized (x) { // this synchronized guarantees one message at time for handle
+                                                                        x.handleMessage(routingMessage.getHeader(), routingMessage.getBody(), tag,subscribeID);
+                                                                    }
+                                                                    workerDelivered.inc();
+                                                                } catch (Exception e) {
+                                                                    log.severe("error handlerMessage:" + e);
+                                                                    // must add a error handler
                                                                 }
-                                                                workerDelivered.inc();
-                                                            } catch (Exception e) {
-                                                                log.severe("error handlerMessage:" + e);
-                                                                // must add a error handler
                                                             }
-                                                        }
-                                                );
-                                            }
+                                                    )
                                     );
                                     tmpAlreadySent.add(subscribeID);
                                 }

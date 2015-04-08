@@ -1,10 +1,7 @@
 package io.turtle.test;
 
-import io.turtle.core.handlers.MessagesHandler;
-import io.turtle.env.TurtleEnvironment;
-
+import io.turtle.env.local.LocalTurtleEnvironment;
 import org.junit.Test;
-import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
@@ -15,34 +12,28 @@ public class InternalCountTest extends BaseTestClass {
 
     @Test
     public void tesInternalCount() throws Exception {
-        TurtleEnvironment turtleEnvironment = new TurtleEnvironment();
-        turtleEnvironment.init();
-        int subCount = turtleEnvironment.getSubscribersCount();
-        String subid1 = turtleEnvironment.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
+        LocalTurtleEnvironment localTurtleEnvironment = new LocalTurtleEnvironment();
+        localTurtleEnvironment.open();
+        int subCount;
+        String subid1 = localTurtleEnvironment.subscribe((header, body, firstMatchTag,sourceSubscriber) -> {
 
-            }
         }, "tag1", "tag2", "tag3", "tag4", "tag5", "tag6");
 
-         subCount = turtleEnvironment.getSubscribersCount();
-        String subid2 = turtleEnvironment.subscribe(new MessagesHandler() {
-            @Override
-            public void handlerMessage(Map header, byte[] body, String firstMatchTag) {
+   //     subCount = localTurtleEnvironment.getSubscribersCount();
+        String subid2 = localTurtleEnvironment.subscribe((header, body, firstMatchTag,sourceSubscriber) -> {
 
-            }
         }, "tag6", "tag7", "tag8", "tag9", "tag10");
 
 
-        assertTrue(turtleEnvironment.getTagIndexCount() == 10);
-         subCount = turtleEnvironment.getSubscribersCount();
+        assertTrue(localTurtleEnvironment.getTagIndexCount() == 10);
+        subCount = localTurtleEnvironment.getSubscribersCount();
         assertTrue(subCount == 2);
 
-        turtleEnvironment.unSubscribe(subid1);
-        turtleEnvironment.unSubscribe(subid2);
-        assertTrue(turtleEnvironment.getTagIndexCount() == 0);
-        assertTrue(turtleEnvironment.getSubscribersCount() == 0);
+        localTurtleEnvironment.unSubscribe(subid1);
+        localTurtleEnvironment.unSubscribe(subid2);
+        assertTrue(localTurtleEnvironment.getTagIndexCount() == 0);
+        assertTrue(localTurtleEnvironment.getSubscribersCount() == 0);
 
-        turtleEnvironment.deInit();
+        localTurtleEnvironment.close();
     }
 }

@@ -2,7 +2,6 @@ package io.turtle.core.handlers;
 
 
 import java.util.Map;
-import java.util.concurrent.Future;
 
 
 /**
@@ -11,5 +10,5 @@ import java.util.concurrent.Future;
  *
  */
 public interface MessagesHandler<T> {
-    void handlerMessage(Map<String,String> header, byte[] body,String firstMatchTag);
+     void handleMessage(Map<String,String> header, byte[] body,String firstMatchTag,T sourceSubscriber);
 }

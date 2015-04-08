@@ -3,66 +3,58 @@ package io.turtle.env;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import io.turtle.configuration.impl.DefaultConfiguration;
-import io.turtle.core.handlers.MessagesHandler;
-import io.turtle.core.routing.Proxy;
 import io.turtle.core.routing.RoutingMessage;
 import io.turtle.core.services.Resources;
-import io.turtle.metrics.DropwizardMetrics;
+import io.turtle.core.services.SubscribeThread;
+import io.turtle.core.tag.TagIndex;
+import io.turtle.metrics.impl.DropwizardMetrics;
 import io.turtle.pubsub.Subscriber;
-import io.turtle.pubsub.impl.LocalSubscriber;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Created by gabriele on 09/03/2015.
+ * Created by gabriele on 04/04/15.
  */
-public class TurtleEnvironment {
-
+public abstract class TurtleEnvironment<T> implements IPublisher {
 
 
     private static final Logger log = Logger.getLogger(TurtleEnvironment.class.getName());
-    final JmxReporter reporter = JmxReporter.forRegistry(DropwizardMetrics.getInstance().getTurtleMetrics()).build();
+    final JmxReporter reporter = JmxReporter.forRegistry(DropwizardMetrics.getInstance().getTurtleMetrics()).inDomain("TurteMT").
+            build();
+
+    protected Resources resources = Resources.getInstance();
 
 
-    private ConcurrentHashMap<String, Subscriber> subscribers = new ConcurrentHashMap<>();
-    private Resources resources = new Resources();
-    private Proxy proxy = new Proxy(resources);
+    protected volatile boolean isActive = false;
 
-    private volatile boolean isActive = false;
+    protected ConcurrentHashMap<T, Subscriber> subscribers = new ConcurrentHashMap<>();
+    protected TagIndex<T> tagIndex;
 
-    public synchronized void init() {
+    protected SubscribeThread<T> subscribeThread;
+
+    public synchronized void open() {
+        log.info("Turtle Environment opening...");
         resources.init(new DefaultConfiguration());
-
-        proxy.init();
+        subscribeThread = new SubscribeThread(tagIndex, subscribers);
+        resources.getServiceThread().submit(subscribeThread);
         reporter.start();
         isActive = true;
+        log.info("Turtle Environment open done");
     }
 
-    public synchronized void deInit() {
-        proxy.deInit();
+
+    public synchronized void close() throws IOException {
+        log.info("Turtle Environment closing... ");
+        subscribers.entrySet().forEach(x -> unSubscribe(x.getKey()));
+
         resources.deInit();
         reporter.stop();
         isActive = false;
+        log.info("Turtle Environment close done");
 
-    }
-
-    public void publish(Map<String, String> header, byte[] body, String... tags) throws InterruptedException {
-        proxy.dispatchPublish(new RoutingMessage(header, body, tags));
-    }
-
-    public void publish(byte[] body, String... tags) throws InterruptedException {
-        this.publish(null, body, tags);
-    }
-
-    public synchronized String subscribe(MessagesHandler messageHandler, String... tags) {
-        return resources.registerSubscriber(new LocalSubscriber(), messageHandler, tags);
-    }
-
-
-    public synchronized void unSubscribe(String subscribeId) {
-        resources.unRegisterSubscriber(subscribeId);
     }
 
     public MetricRegistry getMetrics() {
@@ -70,13 +62,50 @@ public class TurtleEnvironment {
     }
 
 
-    public int getTagIndexCount(){
-        return  resources.getTagIndex().getCount();
+
+
+
+    public synchronized T subscribe(Subscriber subscriber, String... tags) {
+
+        for (String itm : tags) {
+            subscriber.getTags().addTag(itm);
+        }
+        subscribers.put((T) subscriber.getSubscribeId(), subscriber);
+        subscriber.getTags().getTags().forEach(x -> tagIndex.addTagToIndex(x, (T) subscriber.getSubscribeId()));
+        return (T) subscriber.getSubscribeId();
     }
 
-    public int getSubscribersCount(){
 
-        return resources.getSubscribers().size();
+    public synchronized void unSubscribe(T subscriberId) {
+        Subscriber subscriber = subscribers.get(subscriberId);
+        subscriber.getTags().getTags().forEach(x -> tagIndex.removeTagToIndex(x, subscriberId));
+        subscribers.remove(subscriberId);
 
     }
+
+
+    @Override
+    public void publish(Map<String, String> header, byte[] body, String... tags) throws InterruptedException, IOException {
+        subscribeThread.HandleRoutingMessage(new RoutingMessage(header, body, tags));
+    }
+
+    @Override
+    public void publish(RoutingMessage routingMessage) throws InterruptedException {
+        subscribeThread.HandleRoutingMessage(routingMessage);
+    }
+
+    @Override
+    public void publish(byte[] body, String... tags) throws InterruptedException, IOException {
+        this.publish(null, body, tags);
+    }
+
+    public int getTagIndexCount() {
+        return tagIndex.getCount();
+    }
+
+    public int getSubscribersCount() {
+        return this.subscribers.size();
+    }
+
+
 }

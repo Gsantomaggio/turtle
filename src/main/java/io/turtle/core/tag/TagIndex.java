@@ -7,8 +7,8 @@ import java.util.ArrayList;
  */
 public interface TagIndex<T>{
     ArrayList<T> getSubscriberIdsByTag(String tag);
-    void addTagToIndex(String tag, String subscribeId);
-    void removeTagToIndex(String tag, String subscribeId);
+    void addTagToIndex(String tag, T subscribeId);
+    void removeTagToIndex(String tag, T subscribeId);
     int getCount();
     void clear();
 

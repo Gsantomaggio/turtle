@@ -9,8 +9,9 @@ import java.util.Map;
 /**
  * Created by gabriele on 14/03/15.
  */
-public class LocalTagIndex implements TagIndex {
+public class LocalTagIndex implements TagIndex<String> {
 
+    /// map tag and subscriberIs
     private Map<String, ArrayList<String>> tagIndex = new HashMap<>();
     @Override
     public ArrayList<String> getSubscriberIdsByTag(String tag) {
