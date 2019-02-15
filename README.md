@@ -2,19 +2,24 @@
 Thank you travis-ci.org
 
 # Turtle
-#####Why this name?
+ - Why this name?
+ 
 Because my son loves the ninja turtles.
 
-#####What is ?
+ - What is ?
+ 
 Turtle is a lightway publish and subscribe broker/library tag based...yes another one  !!
 
-#####What does ?
+ - What does ?
+ 
 With turtle you can publish and subscribe messages using “tags”.
 
-#####Can I use it?
-> The project is not complete yet, don't use it!!.
+ - Can I use it?
+ 
+The project is not complete yet, don't use it!!.
 
-#####Simple example:
+## Simple example:
+
 ```java
         TurtleEnvironment env = new TurtleEnvironment();
         env.init();
@@ -30,7 +35,7 @@ With turtle you can publish and subscribe messages using “tags”.
         env.unSubscribe(subscriberId);
         env.deInit();
 ```
-#####About internals:
+##### About internals:
 The library contains three threads kind:
 - Publish-Thread
 - Subscriber-Thread
@@ -53,12 +58,12 @@ The cache reduce the java synchronization time appending more than one message t
 
 Finally the worker threads are used by clients,  if the pool is full the worker threads are blocked and the messages will be stored to the subscriber thread queue.
 
-#####Serializzation:
+##### Serializzation:
 The current version does not provide class serializations, the body message is an byte[]. Using byte[] is very flexible, the sender can implement the serialization as prefer.
 Anyway, I'm planning to implement also a primitive types.
 
 
-#####Monitoring:
+##### Monitoring:
 The current version implements JMX interface where it is possible to monitor the threads and the queues status, as following:
 
 ![alt tag](https://raw.githubusercontent.com/Gsantomaggio/turtle/master/doc/images/Configuration.png)
@@ -67,13 +72,9 @@ Resources count:
 
 ![alt tag](https://raw.githubusercontent.com/Gsantomaggio/turtle/master/doc/images/ResourcesCounter.png)
 
-#####What's the plan for the future?
+##### What's the plan for the future?
 Well, my aim is to create an pluggable Publish and Subscribe system tag based.
 Starting with a library, then an essential asynchronous broker and finally a scalable broker.
 
-#####What about the cluster?
+##### What about the cluster?
 I’m making some test with JGroups (http://www.jgroups.org/).
-
-
-
-
